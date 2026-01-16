@@ -1,0 +1,8 @@
+version: "3.9"
+services:
+  ip-checker:
+    build: .
+    image: ip-checker-image:latest
+    container_name: ip-checker-container 
+    ports:
+      - "5000:5000"

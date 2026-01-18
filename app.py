@@ -1,6 +1,9 @@
+"""IP Checker API service."""
+
+import logging
+
 from flask import Flask, jsonify
 import requests
-import logging
 
 app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -9,14 +12,17 @@ IP_API_URL = "http://ip-api.com/json/{}"
 
 @app.route("/health", methods=["GET"])
 def health():
+    """Health check endpoint."""
     return jsonify({"status": "UP"}), 200
 
 @app.route("/", methods=["GET"])
 def index():
+    """Root endpoint with usage instructions."""
     return "Use /ip/<ip> to check an IP, e.g., /ip/8.8.8.8"
 
 @app.route("/ip/<ip>", methods=["GET"])
 def get_ip_info(ip):
+    """Fetch IP information from ip-api.com."""
     response = requests.get(IP_API_URL.format(ip), timeout=5)
     data = response.json()
 

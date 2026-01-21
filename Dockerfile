@@ -5,18 +5,16 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --prefix=/install --no-cache-dir -r requirements.txt
 
-COPY . .
-
 FROM python:3.12-slim as final
 
 WORKDIR /app
 
-# Copy installed packages from builder
+# Copy installed dependencies
 COPY --from=builder /install /usr/local
 
-# Copy application code
-COPY --from=builder /app .
+# Copy application source code
+COPY src/ ./src/
 
 EXPOSE 5000
 
-CMD ["python", "app.py"]
+CMD ["python", "src/app.py"]

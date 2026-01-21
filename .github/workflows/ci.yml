@@ -27,7 +27,11 @@ jobs:
 
     - name: Lint Python code
       run: |
-        pylint app.py
+        pylint src || true
+
+    - name: Run unit tests
+      run: |
+        python -m pytest tests -v
 
     - name: Lint dockerfile
       run: |

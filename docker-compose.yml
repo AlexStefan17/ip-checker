@@ -5,4 +5,6 @@ services:
     image: ip-checker-image:latest
     container_name: ip-checker-container 
     ports:
-      - "5000:5000"
+      - "${FLASK_PORT}:${FLASK_PORT}"
+    env_file:
+      - .env

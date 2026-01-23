@@ -9,6 +9,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      FLASK_PORT: ${{ secrets.FLASK_PORT }}
+      IP_API_URL: ${{ secrets.IP_API_URL }}
+      LOG_LEVEL: ${{ secrets.LOG_LEVEL }}
 
     steps:
     - name: Checkout repository

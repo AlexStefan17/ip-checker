@@ -1,14 +1,20 @@
 """IP Checker API service."""
-
+from dotenv import load_dotenv
+import os
 import logging
 
 from flask import Flask, jsonify
 import requests
 
 app = Flask(__name__)
-logging.basicConfig(level=logging.INFO)
 
-IP_API_URL = "http://ip-api.com/json/{}"
+# env
+load_dotenv()
+IP_API_URL = os.getenv("IP_API_URL")
+FLASK_PORT = int(os.getenv("FLASK_PORT"))
+LOG_LEVEL = os.getenv("LOG_LEVEL")
+
+logging.basicConfig(level=getattr(logging, LOG_LEVEL))
 
 @app.route("/health", methods=["GET"])
 def health():
@@ -39,4 +45,4 @@ def get_ip_info(ip):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=FLASK_PORT)

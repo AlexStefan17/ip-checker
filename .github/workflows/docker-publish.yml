@@ -1,0 +1,34 @@
+name: Build and Push Docker Image
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build Docker image
+        run: |
+          REPO_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME=ghcr.io/$REPO_NAME:latest
+          docker build -t $IMAGE_NAME .
+
+      - name: Push Docker image to GitHub Container Registry
+        run: |
+          REPO_NAME=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME=ghcr.io/$REPO_NAME:latest
+          docker push $IMAGE_NAME

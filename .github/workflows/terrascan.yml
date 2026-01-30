@@ -20,10 +20,15 @@ jobs:
       - name: Terrascan Init
         run: |
           docker run --rm \
-          -v ${{ github.workspace }}:/workspace \
-          -w /workspace \
-          accurics/terrascan init
-
-      - name: Run Terrascan
+            -v ${{ github.workspace }}:/workspace \
+            -v ${{ github.workspace }}/.terrascan:/home/terrascan/.terrascan \
+            -w /workspace \
+            accurics/terrascan:1.19.1 init
+      
+      - name: Terrascan Scan
         run: |
-          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace accurics/terrascan scan .
+          docker run --rm \
+            -v ${{ github.workspace }}:/workspace \
+            -v ${{ github.workspace }}/.terrascan:/home/terrascan/.terrascan \
+            -w /workspace \
+            accurics/terrascan:1.19.1 scan .

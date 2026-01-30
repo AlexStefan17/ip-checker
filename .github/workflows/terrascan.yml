@@ -23,7 +23,7 @@ jobs:
             -v ${{ github.workspace }}:/workspace \
             -v ${{ github.workspace }}/.terrascan:/home/terrascan/.terrascan \
             -w /workspace \
-            accurics/terrascan:1.19.1 init
+            accurics/terrascan:latest init
       
       - name: Terrascan Scan
         run: |
@@ -31,4 +31,4 @@ jobs:
             -v ${{ github.workspace }}:/workspace \
             -v ${{ github.workspace }}/.terrascan:/home/terrascan/.terrascan \
             -w /workspace \
-            accurics/terrascan:1.19.1 scan .
+            accurics/terrascan:latest scan .

@@ -35,7 +35,7 @@ jobs:
 
     - name: Run unit tests
       run: |
-        python -m pytest tests -v
+        python -m pytest tests/unit -v
 
     - name: Lint dockerfile
       run: |
@@ -44,3 +44,27 @@ jobs:
     - name: Build Docker image
       run: |
         docker build -t ip-checker:test .
+
+    - name: Start service for integration tests
+      run: |
+        docker run -d \
+          --name ip-checker-test \
+          -p 5000:5000 \
+          -e FLASK_PORT=5000 \
+          -e IP_API_URL="${{ secrets.IP_API_URL }}" \
+          -e LOG_LEVEL=INFO \
+          ip-checker:test
+        # Wait up to 30 seconds for service to be ready
+        timeout 30 bash -c 'until curl -f http://127.0.0.1:5000/health; do sleep 1; done'
+
+    - name: Run integration tests
+      env:
+        BASE_URL: http://127.0.0.1:5000
+      run: |
+        python -m pytest tests/integration -v
+
+    - name: Stop service
+      if: always()
+      run: |
+        docker stop ip-checker-test || true
+        docker rm ip-checker-test || true

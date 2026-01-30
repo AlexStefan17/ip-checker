@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ip-checker
+  namespace: ip-checker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ip-checker
+  template:
+    metadata:
+      labels:
+        app: ip-checker
+    spec:
+      containers:
+        - name: ip-checker
+          image: ip-checker-image:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+          env:
+            - name: FLASK_PORT
+              value: "5000"
+            - name: IP_API_URL
+              value: "http://ip-api.com/json/{}"
+            - name: LOG_LEVEL
+              value: "INFO"

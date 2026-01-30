@@ -17,6 +17,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Terrascan Init
+        run: |
+          docker run --rm \
+          -v ${{ github.workspace }}:/workspace \
+          -w /workspace \
+          accurics/terrascan init
+
       - name: Run Terrascan
         run: |
           docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace accurics/terrascan scan .

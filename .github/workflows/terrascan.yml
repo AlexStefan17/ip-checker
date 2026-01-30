@@ -1,0 +1,22 @@
+name: Terrascan Security Scan
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  terrascan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Run Terrascan
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/workspace -w /workspace accurics/terrascan scan .

@@ -13,6 +13,10 @@ jobs:
       FLASK_PORT: ${{ secrets.FLASK_PORT }}
       IP_API_URL: ${{ secrets.IP_API_URL }}
       LOG_LEVEL: ${{ secrets.LOG_LEVEL }}
+      REDIS_HOST: ${{ secrets.REDIS_HOST }}
+      REDIS_PORT: ${{ secrets.REDIS_PORT }}
+      REDIS_DB: ${{ secrets.REDIS_DB }}
+      CACHE_TTL: ${{ secrets.CACHE_TTL }}
 
     steps:
     - name: Checkout repository

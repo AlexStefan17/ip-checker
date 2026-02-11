@@ -21,11 +21,21 @@ The app reads configuration from environment variables (or a `.env` file in deve
 
 Example `.env`:
 
-```bash
+```bashpy
 FLASK_PORT=5000
 IP_API_URL=http://ip-api.com/json/{}
 LOG_LEVEL=INFO
 BASE_URL=http://127.0.0.1:5000
+
+# local run
+# REDIS_HOST=localhost
+
+# docker run
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_DB=0
+CACHE_TTL=3600
+
 ```
 
 ---
@@ -61,6 +71,8 @@ curl http://127.0.0.1:5000/ip/8.8.8.8
 ```bash
 docker build -t ip-checker-image:latest .
 
+docker run -d  --name redis -p 6379:6379  redis:latest
+
 docker run --rm \
   -p 5000:5000 \
   -e FLASK_PORT=5000 \
@@ -83,6 +95,11 @@ curl http://127.0.0.1:5000/health
 FLASK_PORT=5000
 IP_API_URL=http://ip-api.com/json/{}
 LOG_LEVEL=INFO
+
+REDIS_HOST=redis
+REDIS_PORT=6379
+REDIS_DB=0
+CACHE_TTL=3600
 ```
 
 Start the stack:
@@ -175,7 +192,8 @@ kind load docker-image ip-checker-image:latest --name ip-checker-cluster
 
 ```bash
 kubectl apply -f k8s/namespace.yml
-kubectl apply -f k8s/
+kubectl apply -f k8s/redis
+kubectl apply -f k8s/ip-checker
 ```
 
 This will create:

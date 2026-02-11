@@ -26,3 +26,11 @@ spec:
               value: "http://ip-api.com/json/{}"
             - name: LOG_LEVEL
               value: "INFO"
+            - name: REDIS_HOST
+              value: "redis"
+            - name: REDIS_PORT
+              value: "6379"
+            - name: REDIS_DB
+              value: "0"
+            - name: CACHE_TTL
+              value: "3600"

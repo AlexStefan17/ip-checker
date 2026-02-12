@@ -51,7 +51,7 @@ jobs:
 
     - name: Start service for integration tests
       run: |
-        docker-compose -f docker-compose.yml up -d
+        docker compose -f docker-compose.yml up -d
         # Wait for ip-checker to be ready
         timeout 30 bash -c 'until curl -f http://127.0.0.1:5000/health; do sleep 1; done'
 
@@ -61,8 +61,8 @@ jobs:
       run: |
         python -m pytest tests/integration -v
 
-    - name: Stop service
+    - name: Stop services
       if: always()
       run: |
-        docker stop ip-checker-test || true
-        docker rm ip-checker-test || true
+        docker compose -f docker-compose.yml down
+

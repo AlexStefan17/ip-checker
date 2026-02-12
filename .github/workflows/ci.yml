@@ -49,6 +49,16 @@ jobs:
       run: |
         docker build -t ip-checker:test .
 
+    - name: Create .env file
+      run: |
+        echo "FLASK_PORT=${{ secrets.FLASK_PORT }}" >> .env
+        echo "IP_API_URL=${{ secrets.IP_API_URL }}" >> .env
+        echo "LOG_LEVEL=${{ secrets.LOG_LEVEL }}" >> .env
+        echo "REDIS_HOST=${{ secrets.REDIS_HOST }}" >> .env
+        echo "REDIS_PORT=${{ secrets.REDIS_PORT }}" >> .env
+        echo "REDIS_DB=${{ secrets.REDIS_DB }}" >> .env
+        echo "CACHE_TTL=${{ secrets.CACHE_TTL }}" >> .env
+
     - name: Start service for integration tests
       run: |
         docker compose -f docker-compose.yml up -d

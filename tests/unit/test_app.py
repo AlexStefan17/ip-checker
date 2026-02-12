@@ -36,6 +36,11 @@ def test_ip_endpoint_success(mocker):
         return_value=mocker.Mock(json=lambda: mock_response)
     )
 
+    # Mock Redis cache
+    mock_cache = mocker.patch("src.app.cache")
+    mock_cache.get.return_value = None
+    mock_cache.set.return_value = True
+
     client = app.test_client()
     response = client.get("/ip/8.8.8.8")
 

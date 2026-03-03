@@ -18,3 +18,14 @@ spec:
                 name: ip-checker
                 port:
                   number: 80
+
+    - host: minio.ip-checker.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  number: 9001

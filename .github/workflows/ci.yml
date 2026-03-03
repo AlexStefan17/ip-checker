@@ -17,62 +17,65 @@ jobs:
       REDIS_PORT: ${{ secrets.REDIS_PORT }}
       REDIS_DB: ${{ secrets.REDIS_DB }}
       CACHE_TTL: ${{ secrets.CACHE_TTL }}
+      MINIO_ACCESS_KEY: ${{ secrets.MINIO_ACCESS_KEY }}
+      MINIO_SECRET_KEY: ${{ secrets.MINIO_ACCESS_KEY }}
+      MINIO_BUCKET: ${{ secrets.MINIO_BUCKET }}
+      BACKUP_INTERVAL: ${{ secrets.BACKUP_INTERVAL }}
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v4
-      with:
-        python-version: 3.12
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pylint pytest
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pylint pytest
 
-    - name: Lint Python code
-      run: |
-        pylint src || true
+      - name: Lint Python code
+        run: |
+          pylint src || true
 
-    - name: Run unit tests
-      run: |
-        python -m pytest tests/unit -v
+      - name: Run unit tests
+        run: |
+          python -m pytest tests/unit -v
 
-    - name: Lint dockerfile
-      run: |
-        docker run --rm -i hadolint/hadolint < Dockerfile
+      - name: Lint dockerfile
+        run: |
+          docker run --rm -i hadolint/hadolint < Dockerfile
 
-    - name: Build Docker image
-      run: |
-        docker build -t ip-checker:test .
+      - name: Build Docker image
+        run: |
+          docker build -t ip-checker:test .
 
-    - name: Create .env file
-      run: |
-        echo "FLASK_PORT=${{ secrets.FLASK_PORT }}" >> .env
-        echo "IP_API_URL=${{ secrets.IP_API_URL }}" >> .env
-        echo "LOG_LEVEL=${{ secrets.LOG_LEVEL }}" >> .env
-        echo "REDIS_HOST=${{ secrets.REDIS_HOST }}" >> .env
-        echo "REDIS_PORT=${{ secrets.REDIS_PORT }}" >> .env
-        echo "REDIS_DB=${{ secrets.REDIS_DB }}" >> .env
-        echo "CACHE_TTL=${{ secrets.CACHE_TTL }}" >> .env
+      - name: Create .env file
+        run: |
+          echo "FLASK_PORT=${{ secrets.FLASK_PORT }}" >> .env
+          echo "IP_API_URL=${{ secrets.IP_API_URL }}" >> .env
+          echo "LOG_LEVEL=${{ secrets.LOG_LEVEL }}" >> .env
+          echo "REDIS_HOST=${{ secrets.REDIS_HOST }}" >> .env
+          echo "REDIS_PORT=${{ secrets.REDIS_PORT }}" >> .env
+          echo "REDIS_DB=${{ secrets.REDIS_DB }}" >> .env
+          echo "CACHE_TTL=${{ secrets.CACHE_TTL }}" >> .env
 
-    - name: Start service for integration tests
-      run: |
-        docker compose -f docker-compose.yml up -d
-        # Wait for ip-checker to be ready
-        timeout 30 bash -c 'until curl -f http://127.0.0.1:5000/health; do sleep 1; done'
+      - name: Start service for integration tests
+        run: |
+          docker compose -f docker-compose.yml up -d
+          # Wait for ip-checker to be ready
+          timeout 30 bash -c 'until curl -f http://127.0.0.1:5000/health; do sleep 1; done'
 
-    - name: Run integration tests
-      env:
-        BASE_URL: http://127.0.0.1:5000
-      run: |
-        python -m pytest tests/integration -v
+      - name: Run integration tests
+        env:
+          BASE_URL: http://127.0.0.1:5000
+        run: |
+          python -m pytest tests/integration -v
 
-    - name: Stop services
-      if: always()
-      run: |
-        docker compose -f docker-compose.yml down
-
+      - name: Stop services
+        if: always()
+        run: |
+          docker compose -f docker-compose.yml down

@@ -5,3 +5,4 @@ python-dotenv==1.2.1
 requests-mock==1.12.1
 redis==7.1.1
 boto3==1.42.52
+prometheus-client==0.24.1

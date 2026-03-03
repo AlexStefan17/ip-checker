@@ -7,6 +7,7 @@ It exposes:
 - `GET /health` – simple health check.
 - `GET /` – usage instructions.
 - `GET /ip/<ip>` – returns basic geo/IP info for the given IP.
+- `GET /metrics` - return Prometheus metrics
 
 ---
 
@@ -21,23 +22,25 @@ The app reads configuration from environment variables (or a `.env` file in deve
 
 Example `.env`:
 
-```bashpy
+````bashpy
 FLASK_PORT=5000
 IP_API_URL=http://ip-api.com/json/{}
 LOG_LEVEL=INFO
-BASE_URL=http://127.0.0.1:5000
+BASE_URL=http://ip-checker.local:8080
 
-# local run
 # REDIS_HOST=localhost
-
-# docker run
 REDIS_HOST=redis
 REDIS_PORT=6379
 REDIS_DB=0
 CACHE_TTL=3600
 
-```
-
+# MinIO
+MINIO_ENDPOINT=minio:9000
+# MINIO_ENDPOINT=localhost:9000
+MINIO_ACCESS_KEY=minioadmin
+MINIO_SECRET_KEY=minioadmin
+MINIO_BUCKET=ip-backup
+BACKUP_INTERVAL=300```
 ---
 
 ## Running locally (without Docker)
@@ -52,15 +55,7 @@ export IP_API_URL="http://ip-api.com/json/{}"
 export LOG_LEVEL=INFO
 
 python src/app.py
-```
-
-Test it:
-
-```bash
-curl http://127.0.0.1:5000/health
-curl http://127.0.0.1:5000/
-curl http://127.0.0.1:5000/ip/8.8.8.8
-```
+````
 
 ---
 
@@ -99,11 +94,21 @@ curl http://127.0.0.1:5000/health
 FLASK_PORT=5000
 IP_API_URL=http://ip-api.com/json/{}
 LOG_LEVEL=INFO
+BASE_URL=http://ip-checker.local:8080
 
+# REDIS_HOST=localhost
 REDIS_HOST=redis
 REDIS_PORT=6379
 REDIS_DB=0
 CACHE_TTL=3600
+
+# MinIO
+MINIO_ENDPOINT=minio:9000
+# MINIO_ENDPOINT=localhost:9000
+MINIO_ACCESS_KEY=minioadmin
+MINIO_SECRET_KEY=minioadmin
+MINIO_BUCKET=ip-backup
+BACKUP_INTERVAL=300
 ```
 
 Start the stack:
@@ -225,6 +230,7 @@ Add the following line so the `ip-checker.local` host resolves to localhost:
 
 ```text
 127.0.0.1 ip-checker.local
+127.0.0.1 minio.ip-checker.local
 ```
 
 ### 6. Accessing the service via Ingress
@@ -235,6 +241,20 @@ With everything running, you can call:
 curl http://ip-checker.local:8080/health
 curl http://ip-checker.local:8080/
 curl http://ip-checker.local:8080/ip/8.8.8.8
+curl -X POST http://ip-checker.local:8080/store
+curl http://ip-checker.local:8080/metrics
+```
+
+### 7. Stop the container (temporally)
+
+```
+ip-checker-cluster-control-plane
+```
+
+### 8. Delete the cluster
+
+```
+kind delete cluster --name ip-checker-cluster
 ```
 
 ---
@@ -250,13 +270,16 @@ Ensure repository secrets are configured (for example `FLASK_PORT`, `IP_API_URL`
 
 ---
 
-## Endpoints summary
+## endpoints summary
 
-- **`GET /health`** → `{"status": "UP"}`
-- **`GET /`** → usage instructions string.
-- **`GET /ip/<ip>`** → JSON with `ip`, `country`, `countryCode`, `city`, `isp`.
+- **`get /health`** → `{"status": "up"}`
+- **`get /`** → usage instructions string.
+- **`get /ip/<ip>`** → json with `ip`, `country`, `countrycode`, `city`, `isp`.
+- **`post /store`** → triggers immediate backup of redis cache to minio (no parameters).
+- **`get /metrics`** → Prometheus metrics in text format for monitoring (no parameters).
 
 # ip-checker
+
 ip-checker app
 
 python -m venv venv

@@ -8,6 +8,7 @@ It exposes:
 - `GET /` – usage instructions.
 - `GET /ip/<ip>` – returns basic geo/IP info for the given IP.
 - `GET /metrics` - return Prometheus metrics
+- `POST /store` - post redis data to minio
 
 ---
 
@@ -224,6 +225,10 @@ kubectl wait --namespace ingress-nginx \
   --for=condition=Ready pods --all --timeout=180s
 ```
 
+```bash
+kubectl apply -f k8s/ingress.yml
+```
+
 ### 5. Update `/etc/hosts` on your machine
 
 Add the following line so the `ip-checker.local` host resolves to localhost:
@@ -289,3 +294,6 @@ python app.py
 
 curl http://127.0.0.1:5000/ip/8.8.8.8
 curl http://127.0.0.1:5000/health
+curl http://127.0.0.1:5000/metrics
+curl http://127.0.0.1:5000/
+curl -X POST http://127.0.0.1:5000/store

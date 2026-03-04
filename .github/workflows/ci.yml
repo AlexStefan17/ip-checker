@@ -66,6 +66,8 @@ jobs:
       - name: Start service for integration tests
         run: |
           docker compose -f docker-compose.yml up -d
+          echo "Waiting 1 minute for services to be ready..."
+          sleep 60
           # Wait for ip-checker to be ready
           timeout 30 bash -c 'until curl -f http://127.0.0.1:5000/health; do sleep 1; done'
 

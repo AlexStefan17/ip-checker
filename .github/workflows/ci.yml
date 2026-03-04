@@ -68,6 +68,8 @@ jobs:
           docker compose -f docker-compose.yml up -d
           echo "Waiting 2 minutes for services to be ready..."
           sleep 120
+          docker ps -a
+          docker logs ip-checker-container
           # Wait for ip-checker to be ready
           timeout 30 bash -c 'until curl -f http://127.0.0.1:5000/health; do sleep 1; done'
 

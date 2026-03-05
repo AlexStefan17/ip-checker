@@ -19,7 +19,7 @@ jobs:
       CACHE_TTL: ${{ secrets.CACHE_TTL }}
       MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
       MINIO_ACCESS_KEY: ${{ secrets.MINIO_ACCESS_KEY }}
-      MINIO_SECRET_KEY: ${{ secrets.MINIO_ACCESS_KEY }}
+      MINIO_SECRET_KEY: ${{ secrets.MINIO_SECRET_KEY }}
       MINIO_BUCKET: ${{ secrets.MINIO_BUCKET }}
       BACKUP_INTERVAL: ${{ secrets.BACKUP_INTERVAL }}
 

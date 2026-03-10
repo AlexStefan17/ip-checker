@@ -1,0 +1,5 @@
+apiVersion: v2
+name: ip-checker
+description: Helm chart for IP Checker app with Redis and MinIO
+version: 0.1.0
+appVersion: "1.0"

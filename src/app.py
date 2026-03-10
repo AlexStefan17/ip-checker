@@ -76,6 +76,18 @@ s3_client = boto3.client(
     config=Config(signature_version="s3v4"),
 )
 
+def wait_for_minio(timeout=30):
+    """Wait until MinIO is reachable."""
+    start = time.time()
+    while time.time() - start < timeout:
+        try:
+            s3_client.list_buckets()
+            logging.info("MinIO is reachable.")
+            return True
+        except Exception:
+            logging.info("Waiting for MinIO to be ready...")
+            time.sleep(2)
+    raise RuntimeError("MinIO did not become ready in time.")
 
 def ensure_bucket():
     """Ensure that the MinIO bucket exists."""
@@ -90,7 +102,7 @@ def ensure_bucket():
     except Exception as e:
         logging.error(f"Error checking/creating bucket: {e}")
 
-
+wait_for_minio()
 ensure_bucket()
 
 

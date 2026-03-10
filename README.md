@@ -204,6 +204,7 @@ kind load docker-image ip-checker-image:latest --name ip-checker-cluster
 kubectl apply -f k8s/namespace.yml
 kubectl apply -f k8s/redis
 kubectl apply -f k8s/ip-checker
+kubectl apply -f k8s/minio
 ```
 
 This will create:
@@ -263,6 +264,19 @@ kind delete cluster --name ip-checker-cluster
 ```
 
 ---
+
+### 9. Run via helm
+```
+kind create cluster --config kind-config.yml
+docker build -t ip-checker-image:latest .
+kind load docker-image ip-checker-image:latest --name ip-checker-cluster
+
+kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
+kubectl wait --namespace ingress-nginx \                                                 
+  --for=condition=Ready pods --all --timeout=180s
+
+helm install ip-checker ./helm/ip-checker-chart --namespace ip-checker --create-namespace 
+```
 
 ## CI and Docker image publishing
 

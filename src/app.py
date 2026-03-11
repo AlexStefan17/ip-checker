@@ -102,10 +102,6 @@ def ensure_bucket():
     except Exception as e:
         logging.error(f"Error checking/creating bucket: {e}")
 
-wait_for_minio()
-ensure_bucket()
-
-
 # Flask routes
 @app.route("/health", methods=["GET"])
 def health():
@@ -216,4 +212,6 @@ threading.Thread(target=save_cache_loop, daemon=True).start()
 
 # Run Flask app
 if __name__ == "__main__":
+    wait_for_minio()
+    ensure_bucket()
     app.run(host="0.0.0.0", port=FLASK_PORT)

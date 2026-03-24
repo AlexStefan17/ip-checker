@@ -3,12 +3,14 @@ kind: Ingress
 metadata:
   name: ip-checker
   namespace: {{ .Values.namespace }}
+  labels:
+    app: ip-checker
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
   ingressClassName: nginx
   rules:
-    - host: ip-checker.local
+    - host: {{ .Values.ipChecker.ingress.host }}
       http:
         paths:
           - path: /
@@ -17,14 +19,4 @@ spec:
               service:
                 name: ip-checker
                 port:
-                  number: 80
-    - host: minio.ip-checker.local
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: minio
-                port:
-                  number: 9001
+                  number: {{ .Values.ipChecker.service.port }}

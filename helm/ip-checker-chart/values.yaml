@@ -1,32 +1,82 @@
 namespace: ip-checker
 
 ipChecker:
-  image: ip-checker-image
-  tag: latest
+  image:
+    repository: ip-checker-image
+    tag: latest
+    pullPolicy: IfNotPresent
+
   replicaCount: 1
+
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 5000
+
+  ingress:
+    host: ip-checker.local
+
   env:
     FLASK_PORT: "5000"
     IP_API_URL: "http://ip-api.com/json/{}"
     LOG_LEVEL: "INFO"
-    REDIS_HOST: redis
+    REDIS_HOST: ip-checker-redis-master
     REDIS_PORT: "6379"
     REDIS_DB: "0"
     CACHE_TTL: "3600"
-    MINIO_ENDPOINT: minio:9000
+    MINIO_ENDPOINT: ip-checker-minio:9000
     MINIO_ACCESS_KEY: minioadmin
     MINIO_SECRET_KEY: minioadmin
     MINIO_BUCKET: ip-backup
     BACKUP_INTERVAL: "300"
 
-redis:
-  image: redis
-  tag: latest
-  replicaCount: 1
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "256Mi"
 
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+        - ALL
+
+# Redis (Bitnami)
+redis:
+  auth:
+    enabled: false
+  master:
+    persistence:
+      enabled: false
+  replica:
+    replicaCount: 0
+
+# MinIO (Bitnami)
 minio:
-  image: minio/minio
-  tag: latest
-  replicaCount: 1
-  storage: 10Gi
-  accessKey: minioadmin
-  secretKey: minioadmin
+  mode: standalone
+  replicas: 1
+  rootUser: "minioadmin"
+  rootPassword: "minioadmin"
+  persistence:
+    enabled: true
+    size: 10Gi
+  service:
+    port: "9000"
+  consoleService:
+    port: "9001"
+  consoleIngress:
+    enabled: true
+    ingressClassName: nginx
+    hosts:
+      - minio-console.ip-checker.local
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hosts:
+      - minio.ip-checker.local

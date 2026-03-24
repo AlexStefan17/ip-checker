@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ip-checker
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: ip-checker
+    version: {{ .Chart.AppVersion }}
+spec:
+  replicas: {{ .Values.ipChecker.replicaCount }}
+  selector:
+    matchLabels:
+      app: ip-checker
+  template:
+    metadata:
+      labels:
+        app: ip-checker
+        version: {{ .Chart.AppVersion }}
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: ip-checker
+          image: "{{ .Values.ipChecker.image.repository }}:{{ .Values.ipChecker.image.tag }}"
+          imagePullPolicy: {{ .Values.ipChecker.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.ipChecker.env.FLASK_PORT }}
+              protocol: TCP
+          env:
+            {{- range $key, $value := .Values.ipChecker.env }}
+            - name: {{ $key }}
+              value: "{{ $value }}"
+            {{- end }}
+          resources:
+            {{- toYaml .Values.ipChecker.resources | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.ipChecker.securityContext | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10

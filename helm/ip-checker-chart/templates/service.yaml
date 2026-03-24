@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ip-checker
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: ip-checker
+spec:
+  type: {{ .Values.ipChecker.service.type }}
+  selector:
+    app: ip-checker
+  ports:
+    - name: http
+      port: {{ .Values.ipChecker.service.port }}
+      targetPort: {{ .Values.ipChecker.service.targetPort }}
+      protocol: TCP

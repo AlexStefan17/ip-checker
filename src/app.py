@@ -1,11 +1,12 @@
 """IP Checker API service with MinIO backup."""
 
+import io
 import json
 import logging
 import os
 import threading
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 
 import boto3
 import redis
@@ -76,7 +77,7 @@ s3_client = boto3.client(
     config=Config(signature_version="s3v4"),
 )
 
-def wait_for_minio(timeout=30):
+def wait_for_minio(timeout=120):
     """Wait until MinIO is reachable."""
     start = time.time()
     while time.time() - start < timeout:
@@ -184,13 +185,19 @@ def save_cache_once():
         logging.info("No data in cache to save.")
         return
 
-    filename = f"ip_cache_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}.json"
+    filename = f"ip_cache_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}.json"
+    
+    # Serialize to bytes and upload directly from memory - no local file needed
+    data_bytes = json.dumps(data_to_store, indent=2).encode('utf-8')
+    data_stream = io.BytesIO(data_bytes)
 
-    with open(filename, "w") as f:
-        json.dump(data_to_store, f, indent=2)
-
-    s3_client.upload_file(filename, MINIO_BUCKET, filename)
-    os.remove(filename)
+    s3_client.put_object(
+        Bucket=MINIO_BUCKET,
+        Key=filename,
+        Body=data_stream,
+        ContentLength=len(data_bytes),
+        ContentType='application/json'
+    )
 
     BACKUP_COUNT.inc()
     logging.info(f"Uploaded {filename} to MinIO")

@@ -60,34 +60,7 @@ python src/app.py
 
 ---
 
-## Running with Docker / docker-compose
-
-### Build and run with Docker directly
-
-```bash
-docker build -t ip-checker-image:latest .
-
-docker run -d  --name redis -p 6379:6379  redis:latest
-
-docker run -d --name minio -p 9000:9000 -p 9001:9001 \
-  -e MINIO_ROOT_USER=minioadmin -e MINIO_ROOT_PASSWORD=minioadmin \
-  -v ~/minio-data:/data minio/minio server /data --console-address ":9001"
-
-docker run --rm \
-  -p 5000:5000 \
-  -e FLASK_PORT=5000 \
-  -e IP_API_URL="http://ip-api.com/json/{}" \
-  -e LOG_LEVEL=INFO \
-  ip-checker-image:latest
-```
-
-Then:
-
-```bash
-curl http://127.0.0.1:5000/health
-```
-
-### Using docker-compose
+## Running docker-compose
 
 `docker-compose.yml` expects a `.env` file with at least `FLASK_PORT` defined:
 
@@ -164,16 +137,6 @@ pytest tests/integration -v
 ```bash
 BASE_URL="http://ip-checker.local:8080" pytest tests/integration -v
 ```
-
-**For Kubernetes/kind via port-forward:**
-
-```bash
-kubectl -n ip-checker port-forward svc/ip-checker 8000:80
-BASE_URL="http://127.0.0.1:8000" pytest tests/integration -v
-```
-
-The integration tests read `BASE_URL` from your `.env` file, or you can override it via environment variable when running pytest.
-
 ---
 
 ## Kubernetes with kind
@@ -251,13 +214,7 @@ curl -X POST http://ip-checker.local:8080/store
 curl http://ip-checker.local:8080/metrics
 ```
 
-### 7. Stop the container (temporally)
-
-```
-ip-checker-cluster-control-plane
-```
-
-### 8. Delete the cluster
+### 7. Delete the cluster
 
 ```
 kind delete cluster --name ip-checker-cluster
@@ -265,17 +222,59 @@ kind delete cluster --name ip-checker-cluster
 
 ---
 
-### 9. Run via helm
+## Run via helm
+
+### 1. Create cluster
 ```
 kind create cluster --config kind-config.yml
+```
+
+### 2. Build and load the image into kind
+```
 docker build -t ip-checker-image:latest .
 kind load docker-image ip-checker-image:latest --name ip-checker-cluster
+```
 
+### 3. Install an Ingress controller
+```
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
-kubectl wait --namespace ingress-nginx \                                                 
-  --for=condition=Ready pods --all --timeout=180s
+kubectl wait --namespace ingress-nginx --for=condition=Ready pods --all --timeout=180s
+```
 
+### 4. Add Helm repositories
+```
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo update
+```
+
+### 5. Build Helm dependencies
+```
+cd helm/ip-checker-chart
+helm dependency build .
+```
+
+### 6. Deploy application
+```
 helm install ip-checker ./helm/ip-checker-chart --namespace ip-checker --create-namespace 
+```
+
+### 7. Update /etc/hosts on your machine
+```
+127.0.0.1 ip-checker.local
+127.0.0.1 minio.ip-checker.local
+127.0.0.1 minio-console.ip-checker.local
+```
+
+### 8. Accessing the service via Ingress
+
+With everything running, you can call:
+
+```bash
+curl http://ip-checker.local:8080/health
+curl http://ip-checker.local:8080/
+curl http://ip-checker.local:8080/ip/8.8.8.8
+curl -X POST http://ip-checker.local:8080/store
+curl http://ip-checker.local:8080/metrics
 ```
 
 ## CI and Docker image publishing
@@ -289,25 +288,10 @@ Ensure repository secrets are configured (for example `FLASK_PORT`, `IP_API_URL`
 
 ---
 
-## endpoints summary
+## Endpoints summary
 
 - **`get /health`** → `{"status": "up"}`
 - **`get /`** → usage instructions string.
 - **`get /ip/<ip>`** → json with `ip`, `country`, `countrycode`, `city`, `isp`.
 - **`post /store`** → triggers immediate backup of redis cache to minio (no parameters).
 - **`get /metrics`** → Prometheus metrics in text format for monitoring (no parameters).
-
-# ip-checker
-
-ip-checker app
-
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-python app.py
-
-curl http://127.0.0.1:5000/ip/8.8.8.8
-curl http://127.0.0.1:5000/health
-curl http://127.0.0.1:5000/metrics
-curl http://127.0.0.1:5000/
-curl -X POST http://127.0.0.1:5000/store

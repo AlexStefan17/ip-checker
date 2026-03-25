@@ -12,6 +12,8 @@ RUN useradd --uid 1000 --no-create-home appuser \
     && mkdir /app \
     && chown appuser:appuser /app
 
+WORKDIR /app
+
 # Copy installed dependencies
 COPY --from=builder /install /usr/local
 

@@ -244,6 +244,7 @@ kubectl wait --namespace ingress-nginx --for=condition=Ready pods --all --timeou
 ### 4. Add Helm repositories
 ```
 helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo add minio https://charts.min.io/ 
 helm repo update
 ```
 

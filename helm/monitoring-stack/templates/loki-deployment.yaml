@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-loki
+spec:
+  replicas: {{ .Values.loki.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-loki
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-loki
+    spec:
+      containers:
+        - name: loki
+          image: "{{ .Values.loki.image.repository }}:{{ .Values.loki.image.tag }}"
+          imagePullPolicy: {{ .Values.loki.image.pullPolicy }}
+          args:
+            - -config.file=/etc/loki/config.yaml
+          ports:
+            - name: http
+              containerPort: 3100
+          resources:
+{{ toYaml .Values.loki.resources | indent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/loki
+            - name: data
+              mountPath: /loki
+      volumes:
+        - name: config
+          configMap:
+            name: {{ .Release.Name }}-loki-config
+        - name: data
+{{- if .Values.loki.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-loki-data
+{{- else }}
+          emptyDir: {}
+{{- end }}

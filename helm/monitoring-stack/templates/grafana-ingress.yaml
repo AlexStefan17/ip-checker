@@ -1,0 +1,19 @@
+{{- if .Values.grafana.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}-grafana
+spec:
+  ingressClassName: {{ .Values.grafana.ingress.ingressClassName }}
+  rules:
+    - host: {{ .Values.grafana.ingress.host }}
+      http:
+        paths:
+          - path: {{ .Values.grafana.ingress.path }}
+            pathType: {{ .Values.grafana.ingress.pathType }}
+            backend:
+              service:
+                name: {{ .Release.Name }}-grafana
+                port:
+                  number: {{ .Values.grafana.service.port }}
+{{- end }}

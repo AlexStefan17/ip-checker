@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ .Release.Name }}-promtail
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-promtail
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-promtail
+    spec:
+      containers:
+        - name: promtail
+          image: "{{ .Values.promtail.image.repository }}:{{ .Values.promtail.image.tag }}"
+          imagePullPolicy: {{ .Values.promtail.image.pullPolicy }}
+          args:
+            - -config.file=/etc/promtail/promtail.yaml
+          resources:
+{{ toYaml .Values.promtail.resources | indent 12 }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/promtail
+            - name: run
+              mountPath: /run/promtail
+            - name: varlog
+              mountPath: /var/log
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: {{ .Release.Name }}-promtail-config
+        - name: run
+          emptyDir: {}
+        - name: varlog
+          hostPath:
+            path: /var/log

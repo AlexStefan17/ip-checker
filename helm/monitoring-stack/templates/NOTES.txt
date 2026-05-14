@@ -1,0 +1,7 @@
+Grafana (Ingress): http://{{ .Values.grafana.ingress.host }} — add the Ingress controller IP (nginx) to /etc/hosts. Without Ingress: kubectl -n {{ .Release.Namespace }} port-forward svc/{{ .Release.Name }}-grafana 3000:{{ .Values.grafana.service.port }}
+Prometheus: kubectl -n {{ .Release.Namespace }} port-forward svc/{{ .Release.Name }}-prometheus 9090:{{ .Values.prometheus.service.port }}
+Loki: kubectl -n {{ .Release.Namespace }} port-forward svc/{{ .Release.Name }}-loki 3100:{{ .Values.loki.service.port }}
+
+Login: use `grafana.adminUser` / `grafana.adminPassword` (defaults: admin / admin).
+
+Scrape ip-checker: set `global.ipCheckerMetricsTargets` to the ip-checker Service DNS name and port (e.g. 80).

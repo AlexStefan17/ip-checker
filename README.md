@@ -226,12 +226,12 @@ Prerequisites: Ingress controller from step 4, namespace `ip-checker` with the i
 From the **repository root**:
 
 ```bash
-helm install monitoring ./helm/monitoring-stack --namespace ip-checker
+helm install monitoring ./helm/monitoring-stack --namespace monitoring --create-namespace
 ```
 
 After pods are ready, open Grafana at `http://grafana.ip-checker.local:8080/` (same kind port mapping as other Ingress hosts). Default credentials are in `values.yaml` (`grafana.adminUser` / `grafana.adminPassword`, typically `admin` / `admin`).
 
-Use `kubectl -n ip-checker get pods` to verify `monitoring-prometheus`, `monitoring-grafana`, `monitoring-loki`, and `monitoring-promtail` (release name may differ if you choose another Helm release name). To tear everything down, see **[Uninstall (optional)](#uninstall-optional)**.
+Use `kubectl -n monitoring get pods` to verify `monitoring-prometheus`, `monitoring-grafana`, `monitoring-loki`, and `monitoring-promtail` (release name may differ if you choose another Helm release name). To tear everything down, see **[Uninstall / full cleanup](#uninstall--full-cleanup)**.
 
 ### 8. Delete the cluster
 
@@ -244,42 +244,46 @@ kind delete cluster --name ip-checker-cluster
 ## Run via helm
 
 ### 1. Create cluster
-```
+```bash
 kind create cluster --config kind-config.yml
 ```
 
 ### 2. Build and load the image into kind
-```
+```bash
 docker build -t ip-checker-image:latest .
 kind load docker-image ip-checker-image:latest --name ip-checker-cluster
 ```
 
 ### 3. Install an Ingress controller
-```
+```bash
 kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/kind/deploy.yaml
 kubectl wait --namespace ingress-nginx --for=condition=Ready pods --all --timeout=180s
 ```
 
 ### 4. Add Helm repositories
-```
+```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm repo add minio https://charts.min.io/ 
 helm repo update
 ```
 
 ### 5. Build Helm dependencies
-```
-cd helm/ip-checker-chart
+```bash
+cd ./helm/ip-checker-chart
 helm dependency build .
 ```
 
 ### 6. Deploy application
-```
-helm install ip-checker ./helm/ip-checker-chart --namespace ip-checker --create-namespace 
+```bash
+# If you are still in ./helm/ip-checker-chart after step 5:
+helm install ip-checker . --namespace ip-checker --create-namespace
+
+# If you are in repository root:
+helm install ip-checker ./helm/ip-checker-chart --namespace ip-checker --create-namespace
 ```
 
 ### 7. Update /etc/hosts on your machine
-```
+```text
 127.0.0.1 ip-checker.local
 127.0.0.1 minio.ip-checker.local
 127.0.0.1 minio-console.ip-checker.local
@@ -305,29 +309,57 @@ curl http://ip-checker.local:8080/metrics
 With the `ip-checker` release already installed in namespace `ip-checker`, run one of the following from the **repository root**:
 
 ```bash
-helm install monitoring ./helm/monitoring-stack --namespace ip-checker
+helm install monitoring ./helm/monitoring-stack --namespace monitoring --create-namespace
 ```
 
 If you are still in `helm/ip-checker-chart` after step 5, use:
 
 ```bash
-helm install monitoring ../monitoring-stack --namespace ip-checker
+helm install monitoring ../monitoring-stack --namespace monitoring --create-namespace
 ```
 
-This deploys Grafana (Ingress host `grafana.ip-checker.local`, port **8080** on the host via kind), Prometheus, Loki, and Promtail. Ensure `127.0.0.1 grafana.ip-checker.local` is in `/etc/hosts` (step 7). Scrape targets and credentials are documented in `helm/monitoring-stack/values.yaml` and in the post-install notes (`helm get notes monitoring -n ip-checker`). To remove releases, see **[Uninstall (optional)](#uninstall-optional)**.
+This deploys Grafana (Ingress host `grafana.ip-checker.local`, port **8080** on the host via kind), Prometheus, Loki, and Promtail in namespace `monitoring`. Ensure `127.0.0.1 grafana.ip-checker.local` is in `/etc/hosts` (step 7). Scrape targets and credentials are documented in `helm/monitoring-stack/values.yaml` and in the post-install notes (`helm get notes monitoring -n monitoring`). To remove releases, see **[Uninstall / full cleanup](#uninstall--full-cleanup)**.
+
+### 10. Open in browser (ip-checker, MinIO, Grafana)
+
+Wait for all pods to be ready before opening the URLs:
+
+```bash
+kubectl get pods -n ip-checker
+kubectl get pods -n monitoring
+```
+
+Open these URLs in your browser:
+
+- ip-checker API: `http://ip-checker.local:8080/`
+- MinIO Console: `http://minio-console.ip-checker.local:8080/`
+- Grafana (after step 9): `http://grafana.ip-checker.local:8080/login`
+
+Default credentials:
+
+- MinIO Console: `minioadmin` / `minioadmin`
+- Grafana: `admin` / `admin`
+
+Notes:
+
+- `minio.ip-checker.local` is the MinIO S3 API endpoint and is not intended for normal browser UI usage.
+- If Grafana briefly returns `503 Service Temporarily Unavailable`, wait until the Grafana pod is `1/1 Running` and refresh.
 
 ---
 
-## Uninstall (optional)
+## Uninstall / full cleanup
 
-Use this when you want to remove workloads from the cluster but keep kind running, or before reinstalling from scratch.
+Use this section for either:
+
+- removing only workloads from the cluster (keep kind running), or
+- deleting everything (full reset: releases, namespace, and kind cluster).
 
 ### After **Kubernetes with kind** (manifests with `kubectl`)
 
 If you installed the monitoring chart (see **Monitoring stack** under [Kubernetes with kind](#kubernetes-with-kind)), remove that Helm release first (skip this if you did not install monitoring):
 
 ```bash
-helm uninstall monitoring --namespace ip-checker
+helm uninstall monitoring --namespace monitoring
 ```
 
 Then delete the project namespace (app, Redis, MinIO, Ingress rules from `k8s/ingress.yml`, and Helm metadata stored in that namespace):
@@ -343,7 +375,7 @@ The `ingress-nginx` controller stays until you delete the kind cluster (see **De
 If you installed monitoring, uninstall it first (skip the first line if you did not install monitoring), then the application chart:
 
 ```bash
-helm uninstall monitoring --namespace ip-checker
+helm uninstall monitoring --namespace monitoring
 helm uninstall ip-checker --namespace ip-checker
 ```
 
@@ -352,6 +384,33 @@ To drop the namespace and any leftover objects (for example stuck `Pending` PVCs
 ```bash
 kubectl delete namespace ip-checker
 ```
+
+### Delete the cluster completely (full reset)
+
+Run from anywhere on your machine:
+
+```bash
+# Optional but recommended: remove Helm releases first
+helm uninstall monitoring --namespace monitoring
+helm uninstall ip-checker --namespace ip-checker
+
+# Optional: remove project namespace if it still exists
+kubectl delete namespace ip-checker
+kubectl delete namespace monitoring
+
+# Delete the entire kind cluster
+kind delete cluster --name ip-checker-cluster
+```
+
+Optional local cleanup:
+
+- Remove host entries from `/etc/hosts`:
+  - `ip-checker.local`
+  - `minio.ip-checker.local`
+  - `minio-console.ip-checker.local`
+  - `grafana.ip-checker.local`
+- Remove local Docker image if you no longer need it:
+  - `docker rmi ip-checker-image:latest`
 
 ---
 
